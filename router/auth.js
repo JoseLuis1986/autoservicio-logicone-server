@@ -13,10 +13,11 @@ const router = Router();
 
 //Crear nuevos usuarios
 router.post('/new', [
-    check('name', 'Name is required').not().isEmpty(),
-    check('email', 'email is required').isEmail(),
-    check('password', 'password is required').notEmpty(),
-    check('department', 'department is required').notEmpty(),
+    check('tenant_id', 'tenant_id is required').not().isEmpty(),
+    check('client_id', 'client_id is required').notEmpty(),
+    check('client_secret', 'client_secret is required').notEmpty(),
+    check('grant_type', 'grant_type is required').notEmpty(),
+    check('resource', 'resource is required').notEmpty(),
     // check('password', 'password must be greater than 5 characters').isLength({ min: 5 }), 
     // check('password').exists(),
     // check(
@@ -30,8 +31,9 @@ router.post('/new', [
 
 // Login
 router.post('/', [
-    check('email', 'email is required').isEmail(),
-    check('password', 'password is required').not().isEmpty(),
+    check('Personnelnumber', 'email is required').notEmpty(),
+    check('Identification', 'Identificacion is required').notEmpty(),
+    check('Nombre', 'Nombre es requerido').notEmpty(),
     validateFields
 ], loginUser);
 
