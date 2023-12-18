@@ -5,7 +5,8 @@ const validateJWT = ( req, res, next ) => {
 
     try {
 
-        const token = req.header('x-token');
+        const tk = req.header('authorization');
+        const token = token.split(" ")[1]
         if ( !token ){
             return res.status(401).json({
                 ok: false,

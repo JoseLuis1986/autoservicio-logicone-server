@@ -1,109 +1,65 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const { response } = require('express');
-const user = require('../models/user');
-const User = require('../models/user');
+const Configuration = require('../models/configuration');
 const bcrypt = require('bcryptjs');
 const { generateJWT } = require('../helpers/jwt');
 const { validate } = require('../models/user');
+const { getToken, sendMail } = require('../service/index');
+const generateRandomNumbers = require('../helpers/generateRandomNumbers');
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-
-const createUser = async (req, res = response) => {
-    console.log(req.body);
-    const {
-        tenant_id,
-        client_id,
-        client_secret,
-        grant_type,
-        resource } = req.body;
-
-    let data = new FormData();
-    data.append('grant_type', 'client_credentials');
-    data.append('client_id', `${client_id}`);
-    data.append('client_secret', `${client_secret}`);
-    data.append('resource', `${resource}`);
-
-    let config = {
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: `https://login.microsoftonline.com/${tenant_id}/oauth2/token`,
-        headers: {
-            'Cookie': 'fpc=AhRd1HaGq51PoupPS4_VfPm_VOVHAQAAAEDdA90OAAAA',
-            ...data.getHeaders()
-        },
-        data: data
-    };
-
-    axios.request(config)
-        .then((response) => response.data)
-        .then((result) => {
-            const { access_token } = result;
-            console.log('token', access_token);
-            if (access_token) {
-                res.json({
-                    ok: true,
-                    token: access_token
-                })
-            }
-
-        })
-        .catch((error) => {
-            console.log('error de register', error.data);
-            res.status(500).json({
-                ok: false,
-                msg: 'Hable con el administrador'
+const getConfigurations = async (req, res = response) => {
+    try {
+        const configurations = await Configuration.find();
+        //Si hay una configuracion establecida se retorna el token
+        if (configurations[0]) {
+            const result = await getToken(configurations[0])
+            const { token } = result;
+            res.status(200).json({
+                ok: true,
+                token
             })
-        });
+        } else {
+            // De lo contrario se retorna un mensaje
+            res.status(200).json({
+                ok: false,
+                result: "no hay configuracion inicial"
+            })
+        }
+    } catch (err) {
+        console.log("hubo un error")
+    }
+}
 
-    // const { tenant_id, client_id, client_secret, grant_type, resource } = req.body;
+const createConf = async (req, res = response) => {
+    // console.log(req.body);
+    try {
+        const respuesta = await getToken(req.body);
+        if (respuesta.success) {
+            const conf = new Configuration(req.body);
+            await conf.save();
+            res.status(201).json(respuesta)
+        }
 
-    //verificar que el email no exista
-    // const emailExists = await User.findOne({ email: email });
-
-    // if (emailExists) {
-    //     return res.status(400).json({
-    //         ok: false,
-    //         msg: 'El correo ya existe'
-    //     })
-    // }
-
-    // const usuario = new User(req.body);
-    // //Encriptar contraseña
-    // const salt = bcrypt.genSaltSync();
-    // usuario.password = bcrypt.hashSync(password, salt);
-
-    // //Guardar usuario en BD
-    // await usuario.save();
-
-    // // Generar el JWT
-
-    // const token = await generateJWT(usuario.id);
-
-    // res.json({
-    //     ok: true,
-    //     usuario,
-    //     token
-    // })
-
-
-
+    } catch (error) {
+        // console.log('mi error aqui', error)
+        res.status(400).json(error)
+    }
 };
 
 const loginUser = async (req, res = response) => {
-
-    console.log('mi data', req.body);
 
     const token = req.headers['authorization'];
 
     const { Personnelnumber, Identification, Nombre } = req.body;
 
-    const url = 'https://usnconeboxax1aos.cloud.onebox.dynamics.com/api/services/LHKioskoServiceGroup/LHKioskoService/GetLHEmployeeInformation';
+    const url = process.env.URL_GET_EMPLOYEE;
 
 
     let rawData = JSON.stringify({ _json: `{\"Personnelnumber\":\"${Personnelnumber}\",\"Identification\":\"${Identification}\",\"Nombre\":\"${Nombre}\"}` })
-
+    
     try {
         const resp = await axios.post(url, rawData, {
             headers: {
@@ -111,118 +67,43 @@ const loginUser = async (req, res = response) => {
                 'Authorization': `${token}`
             }
         })
-        const result = await resp.data;
+
+        const { data } = resp;
+        const dataUser = JSON.parse(data);
+        const { Received, CodigoError, DescripcionError } = dataUser;
+        const datosUser = JSON.parse(Received);
+        const fourDigits = generateRandomNumbers();
+        const subject = `Bienvenido al autoservicio de logicone Sr. ${datosUser.Name}, ${datosUser.PrimaryContactEmail}`
+
+        await sendMail(`${subject}`, "joseluissanchezgarcia1986@gmail.com", "Su clave de acceso", fourDigits)
+        const dtt = {
+            datosUser,
+            CodigoError,
+            DescripcionError,
+            ClaveAccess: fourDigits
+        }
         res.status(200).json({
             ok: true,
-            uid: '15154',
-            usuario: result
+            usuario: dtt
         })
     } catch (error) {
+        // console.log('mi error', error)
         return res.status(404).json({
             ok: false,
-            msg: 'Hable con el administrador'
         })
     }
-
-    console.log(rawData);
-
-    // res.json({
-    //     ok: true,
-    //     uid: '15154',
-    // })
-    // let config = {
-    //     method: 'post',
-    //     maxBodyLength: Infinity,
-    //     url: 'https://usnconeboxax1aos.cloud.onebox.dynamics.com/api/services/LHKioskoServiceGroup/LHKioskoService/GetLHEmployeeInformation',
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `${token}`
-    //     },
-    //     data: rawData
-    // };
-
-    // axios.request(config)
-    //     .then((response) => {
-    //         return res.json({
-    //             ok: true,
-    //             uid: '15154',
-    //             usuario: JSON.stringify(response.data)
-    //         })
-    //     })
-    //     .catch((error) => {
-    //         return res.status('404').json({
-    //             ok: false,
-    //             msg: 'Hable con el administrador'
-    //         })
-    //     });
-    // res.json({
-    //     ok: true,
-    //     usuario: email,
-    //     token: password
-    // })
-
-    // try {
-    //     // Verificar si existe el correo
-    //     const userDb = await User.findOne({ email });
-    //     if( !userDb ){
-    //         return res.status(404).json({
-    //             ok: false,
-    //             msg: 'Email no encontrado'
-    //         });
-    //     }
-
-    //     //Validar el password
-    //     const validPassword = bcrypt.compareSync( password, userDb.password );
-    //     if( !validPassword ){
-    //         return res.status(400).json({
-    //             ok: false,
-    //             msg: 'Password no es correcto'
-    //         });
-    //     }
-
-    //     //Generar el JWT
-    //     const token = await generateJWT( userDb.id );
-
-    //     res.json({
-    //         ok: true,
-    //         usuario: userDb,
-    //         token
-    //     })
-
-    // } catch (error) {
-    //     console.log(error);
-    //     res.status(500).json({
-    //         ok: false,
-    //         msg: 'Hable con el administrador'
-    //     })
-    // }
 };
 
-
 const renewToken = async (req, res = response) => {
-    
-    const uid = req.uid;
+    const name = req.query;
 
-    try {
-        // Generar un nuevo jwt
-        const token = await generateJWT(uid);
-
-        //Obtener el usuario por uid
-        const usuario = await User.findById(uid);
-
-        res.json({
-            ok: true,
-            usuario,
-            token
-        })
-
-    } catch (err) {
-        console.log(err)
-    }
+    console.log("save configuration", name);
+    res.status(200).json({ ok: true })
 };
 
 module.exports = {
-    createUser,
+    getConfigurations,
+    createConf,
     loginUser,
     renewToken
 };

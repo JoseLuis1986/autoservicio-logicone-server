@@ -1,17 +1,27 @@
 /*
     path: api/login
 */
-
 const { Router } = require('express');
 const { check } = require('express-validator');
-const { createUser, loginUser, renewToken } = require('../controllers/auth');
+const { createConf, loginUser, renewToken, getConfigurations } = require('../controllers/auth');
 const { validateFields } = require('../middlewares/validate-fields');
-const { validateJWT } = require('../middlewares/validate-jwt');
+// const { validateJWT } = require('../middlewares/validate-jwt');
 
 const router = Router();
 
+//Obtener la configuracion del cliente principal
+router.get('/', getConfigurations)
 
-//Crear nuevos usuarios
+// Login empleados
+router.post('/', [
+    check('Personnelnumber', 'email is required').notEmpty(),
+    check('Identification', 'Identificacion is required').notEmpty(),
+    check('Nombre', 'Nombre es requerido').notEmpty(),
+    validateFields
+], loginUser);
+
+//Crear nuevas configuraciones
+/**TO-DO probar que no se cree otra configuracion igual a la que ya existe */
 router.post('/new', [
     check('tenant_id', 'tenant_id is required').not().isEmpty(),
     check('client_id', 'client_id is required').notEmpty(),
@@ -27,18 +37,10 @@ router.post('/new', [
     //     .exists()
     //     .custom((value, { req }) => value === req.body.password),
     validateFields
-], createUser);
-
-// Login
-router.post('/', [
-    check('Personnelnumber', 'email is required').notEmpty(),
-    check('Identification', 'Identificacion is required').notEmpty(),
-    check('Nombre', 'Nombre es requerido').notEmpty(),
-    validateFields
-], loginUser);
+], createConf);
 
 //renovar token
-router.get('/renew', validateJWT , renewToken);
+router.get('/renew', renewToken);
 
 
 

@@ -37,7 +37,7 @@ class Server {
 
         //API ENDPOINTS
         this.app.use('/api/login', require('../router/auth'));
-        this.app.use('/api/message', require('../router/message'));
+        this.app.use('/api/employee', require('../router/employee'));
 
     }
 
