@@ -18,13 +18,13 @@ const getConfigurations = async (req, res = response) => {
             const result = await getToken(configurations[0])
             const { token } = result;
             res.status(200).json({
-                ok: true,
+                success: true,
                 token
             })
         } else {
             // De lo contrario se retorna un mensaje
             res.status(200).json({
-                ok: false,
+                success: false,
                 result: "no hay configuracion inicial"
             })
         }
@@ -34,7 +34,6 @@ const getConfigurations = async (req, res = response) => {
 }
 
 const createConf = async (req, res = response) => {
-    // console.log(req.body);
     try {
         const respuesta = await getToken(req.body);
         if (respuesta.success) {
@@ -44,7 +43,6 @@ const createConf = async (req, res = response) => {
         }
 
     } catch (error) {
-        // console.log('mi error aqui', error)
         res.status(400).json(error)
     }
 };
@@ -64,10 +62,9 @@ const loginUser = async (req, res = response) => {
         const resp = await axios.post(url, rawData, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `${token}`
+                'Authorization': 'Bearer '+token
             }
         })
-
         const { data } = resp;
         const dataUser = JSON.parse(data);
         const { Received, CodigoError, DescripcionError } = dataUser;
@@ -83,13 +80,13 @@ const loginUser = async (req, res = response) => {
             ClaveAccess: fourDigits
         }
         res.status(200).json({
-            ok: true,
+            success: true,
             usuario: dtt
         })
-    } catch (error) {
-        // console.log('mi error', error)
+    } catch (err) {
         return res.status(404).json({
-            ok: false,
+            success: false,
+            error: err
         })
     }
 };
@@ -97,7 +94,6 @@ const loginUser = async (req, res = response) => {
 const renewToken = async (req, res = response) => {
     const name = req.query;
 
-    console.log("save configuration", name);
     res.status(200).json({ ok: true })
 };
 
