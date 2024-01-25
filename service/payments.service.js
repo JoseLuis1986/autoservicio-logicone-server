@@ -1,11 +1,14 @@
 const axios = require('axios');
 const dayjs = require('dayjs');
+const getDatesBetween = require('../helpers/getDatesBetween');
 
-const getPaymentsByEmployee = ({ Personnelnumber, Name }, token) => {
+const getPaymentsByEmployee = ({ Personnelnumber, Name, PeriodStartDate, PeriodEndDate }, token) => {
     return new Promise((resolve, reject) => {
-
+        /* https://usnconeboxax1aos.cloud.onebox.dynamics.com/data/PayStatementHeaders?$filter=PersonnelNumber 
+           eq '000020' and PeriodStartDate ge 2015-12-22T12:00:00Z and PeriodEndDate le 2016-01-31T12:00:00Z
+        */
         const urlBase = process.env.URL_BASE
-        const url1 = `${urlBase}/PayStatementHeaders?$filter=PersonnelNumber eq \'${Personnelnumber}\'`
+        const url1 = `${urlBase}/PayStatementHeaders?$filter=PersonnelNumber eq \'${Personnelnumber}\' and PeriodStartDate ge ${PeriodStartDate} and PeriodEndDate le ${PeriodEndDate}`
         // const url2 = `${urlBase}/PayrollUSTaxTransactionSummaries?$filter=PersonnelNumber eq \'${num}\'`
         let config = {
             method: 'get',
@@ -24,7 +27,7 @@ const getPaymentsByEmployee = ({ Personnelnumber, Name }, token) => {
                     let d = {
                         ...item,
                         Name,
-                        PayPeriod: dayjs(item.PeriodStartDate).format('YYYY-MM-DD') + "  " + dayjs(item.PeriodEndDate).format('YYYY-MM-DD'),
+                        PayPeriod: item.PeriodStartDate + "  " + item.PeriodEndDate,
                         PaymentDate: dayjs(item.PaymentDate).format('YYYY-MM-DD'),
                         PeriodStartDate: dayjs(item.PeriodStartDate).format('YYYY-MM-DD'),
                         PeriodEndDate: dayjs(item.PeriodEndDate).format('YYYY-MM-DD')
@@ -36,6 +39,7 @@ const getPaymentsByEmployee = ({ Personnelnumber, Name }, token) => {
                 resolve({ success: true, data: newPay });
             })
             .catch((error) => {
+                console.log(error)
                 reject({
                     success: false,
                     status: error.response.status,
@@ -160,6 +164,54 @@ const timeOffRequestByEmployee = (num, token) => {
     })
 }
 
+const timeOffRequestByEmployeeByDate = ({
+    PersonnelNumber,
+    StartDate,
+    EndDate,
+    token }) => {
+        console.log(PersonnelNumber);
+    return new Promise((resolve, reject) => {
+        const urlBase = process.env.URL_BASE
+        const url1 = `${urlBase}/EssLeaveRequestAssignedHeaders?$filter=PersonnelNumber eq \'${PersonnelNumber}\' and StartDate ge ${StartDate} and EndDate le ${EndDate}`
+        let config = {
+            method: 'get',
+            url: url1,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        };
+        axios.request(config)
+            .then((response) => response.data)
+            .then(({ value }) => {
+                if (value.length === 0) {
+                    resolve({ success: true, data: [] });
+                } else {
+                    let dt = [];
+                    value.map((item) => {
+                        delete item["@odata.etag"];
+                        let d = {
+                            ...item,
+                            RequestDate: dayjs(item.RequestDate).format('YYYY-MM-DD'),
+                            StartDate: dayjs(item.StartDate).format('YYYY-MM-DD'),
+                            EndDate: dayjs(item.EndDate).format('YYYY-MM-DD')
+                        }
+                        dt.push(d);
+                    });
+                    dt.reverse()
+                    resolve({ success: true, data: dt });
+                }
+            })
+            .catch((error) => {
+                reject({
+                    success: false,
+                    status: error.response.status,
+                    statusText: error.response.statusText
+                })
+            })
+    })
+}
+
 const getTypeLeaveByEmployee = (num, token) => {
     return new Promise((resolve, reject) => {
         const baseUrl = process.env.URL_BASE;
@@ -208,19 +260,55 @@ const getTypeLeaveByEmployee = (num, token) => {
 const requestTimeOffByEmployee = (data, token) => {
     const baseUrl = process.env.URL_BASE;
     const url1 = `${baseUrl}/MyLeaveRequests`
-    return new Promise((resolve, reject) => {
-        let config = {
-            method: 'post',
-            url: url1,
+    const { startDate, endDate, PersonnelNumber, LeaveType, Comment } = data
+    const datos = {
+        LeaveDate: dayjs(startDate).format('YYYY-MM-DD'),
+        PersonnelNumber,
+        LeaveType,
+        Comment
+    }
+    async function startDateLeaveAbsence(params) {
+        const response = await axios.post(url1, params, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
-            },
-            data: data
-        };
-        axios.request(config)
-            .then((res) => res.data)
+            }
+        })
+        const result = response.data;
+        return result;
+    }
+    /*
+    Resultado de la primera insercion del tipo de solicitud con la fecha inicial
+    { 
+        dataAreaId: 'usmf',
+        RequestId: 'USMF-000027',
+        LeaveType: 'Sick',
+        LeaveDate: '2024-01-09T12:00:00Z',
+        ReasonCodeId: '',
+        PersonnelNumber: '000020',
+        RequestDate: '1900-01-01T12:00:00Z',
+        Comment: 'Dolor de muelas',
+        Status: 'Draft',
+        Amount: 0,
+        HalfDayDefinition: 'None'
+    } 
+    */
+    return new Promise((resolve, reject) => {
+
+        startDateLeaveAbsence(datos)
             .then((data) => {
+                console.log(data);
+                const { RequestId, LeaveType } = data;
+                const datesArray = getDatesBetween(startDate, endDate);
+                delete datesArray[0];
+                datesArray?.map((date) => {
+                    let newData = {
+                        RequestId,
+                        LeaveType,
+                        LeaveDate: dayjs(date).format('YYYY-MM-DD')
+                    };
+                    startDateLeaveAbsence(newData)
+                })
                 resolve({ success: true, data });
             })
             .catch((error) => {
@@ -389,7 +477,7 @@ const deductionsImpuestos = async (batch, token) => {
             url: url,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer '+token
+                'Authorization': 'Bearer ' + token
             }
         }
 
@@ -417,6 +505,7 @@ module.exports = {
     getPaymentsByEmployee,
     getLeaveAndAbsenseByEmployee,
     timeOffRequestByEmployee,
+    timeOffRequestByEmployeeByDate,
     timeOffApprovedByEmployee,
     getTypeLeaveByEmployee,
     requestTimeOffByEmployee,

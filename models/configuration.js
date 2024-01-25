@@ -30,6 +30,14 @@ const configurationSchema = Schema({
     grant_type: {
         type: String,
         required: true
+    },
+    logo: {
+        type: String,
+        default: "https://via.placeholder.com/150"  
+    },
+    background: {
+        type: String,
+        default: "bac2da"  
     }
 });
 

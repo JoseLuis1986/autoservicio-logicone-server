@@ -25,6 +25,8 @@ const router = Router();
 router.get('/', [
     check('PersonnelNumber', 'PersonnelNumber is required').notEmpty(),
     check('Name', 'El nombre es requerido').notEmpty(),
+    check('PeriodStartDate', 'La fecha inicial es requerida').notEmpty(),
+    check('PeriodEndDate', 'La fecha final es requerida').notEmpty(),
     validateFields
 ], getAllPayments);
 

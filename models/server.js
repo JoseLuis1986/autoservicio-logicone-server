@@ -4,6 +4,7 @@ const http = require('http');
 // const socketio = require('socket.io');
 const path = require('path');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 
 // const Sockets = require('./sockets');
 const { dbConnection } = require('../database/config');
@@ -35,10 +36,15 @@ class Server {
         //Parseo del Body
         this.app.use(express.json());
 
+
         //API ENDPOINTS
         this.app.use('/api/login', require('../router/auth'));
         this.app.use('/api/employee', require('../router/employee'));
         this.app.use('/api/payments', require('../router/payments'));
+        this.app.use('/api/general', require('../router/general'));
+        // this.app.use((req, res) => {
+        //     res.status(404).send({ success: false, message: "Not found" })
+        // })
 
     }
 

@@ -1,5 +1,40 @@
 const axios = require('axios');
 
+const sendRequestAccess = (name, personal_id, token) => {
+    console.log(name);
+    return new Promise((resolve, reject) => {
+        const urlBase = process.env.URL_BASE;
+        const url = `${urlBase}/PersonIdentificationNumbers`;
+
+        let config = {
+            method: 'get',
+            url,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        };
+
+        axios.request(config)
+            .then((response) => response.data)
+            .then(({ value }) => {
+                const idFiltered = value.filter((item) => item.IdentificationNumber === personal_id);
+                if (!idFiltered.length) {
+                    return resolve({ success: true, data: idFiltered, message: 'Su Identificacion es incorrecta' })
+                }
+                return resolve({ success: true, data: idFiltered, message: 'Su solicitud fue enviada a recursos humanos' });
+            })
+            .catch((error) => {
+                reject({
+                    success: false,
+                    status: error.response.status,
+                    statusText: error.response.statusText
+                })
+            })
+
+    })
+};
+
 const getAddressByEmployee = (num, token) => {
 
     const urlBase = process.env.URL_BASE
@@ -13,7 +48,7 @@ const getAddressByEmployee = (num, token) => {
             url: urlAddress,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer `+token
+                'Authorization': `Bearer ` + token
             }
         };
 
@@ -45,7 +80,7 @@ const getContactDetailsByEmployee = (num, token) => {
             url: urlAddress,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer '+token
+                'Authorization': 'Bearer ' + token
             }
         };
 
@@ -77,7 +112,7 @@ const getPersonalContactsByEmployee = (num, token) => {
             url: urlAddress,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer '+token
+                'Authorization': 'Bearer ' + token
             }
         };
 
@@ -118,7 +153,7 @@ const getPersonalIdsByEmployee = (num, token) => {
             url: urlAddress,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer '+token
+                'Authorization': 'Bearer ' + token
             }
         };
 
@@ -149,7 +184,7 @@ const getPaymentsMethodsByEmp = (num, token) => {
             url: urlAddress,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer '+token
+                'Authorization': 'Bearer ' + token
             }
         };
 
@@ -171,6 +206,7 @@ const getPaymentsMethodsByEmp = (num, token) => {
 
 
 module.exports = {
+    sendRequestAccess,
     getAddressByEmployee,
     getContactDetailsByEmployee,
     getPersonalContactsByEmployee,

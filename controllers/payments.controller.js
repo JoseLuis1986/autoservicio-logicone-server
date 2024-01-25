@@ -1,27 +1,32 @@
 const { response } = require('express');
 const axios = require('axios');
-const { 
-  getPaymentsByEmployee, 
-  getLeaveAndAbsenseByEmployee, 
-  timeOffApprovedByEmployee, 
-  timeOffRequestByEmployee, 
-  requestTimeOffByEmployee, 
-  getTypeLeaveByEmployee, 
-  payStatementEarningLine, 
+const {
+  getPaymentsByEmployee,
+  getLeaveAndAbsenseByEmployee,
+  timeOffApprovedByEmployee,
+  timeOffRequestByEmployee,
+  requestTimeOffByEmployee,
+  getTypeLeaveByEmployee,
+  payStatementEarningLine,
   accumulationEarnings,
-  deductionsOfBenefitByEmployee, 
-  deductionsImpuestos
+  deductionsOfBenefitByEmployee,
+  deductionsImpuestos,
+  timeOffRequestByEmployeeByDate
 } = require('../service/payments.service');
 const dayjs = require('dayjs');
 
 
 const getAllPayments = async (req, res = response) => {
+  console.log(req.query);
   const Personnelnumber = req.query.PersonnelNumber;
   const Name = req.query.Name;
-  const personal = { Personnelnumber, Name }
+  const PeriodStartDate = req.query.PeriodStartDate;
+  const PeriodEndDate = req.query.PeriodEndDate;
+  const datos = { Personnelnumber, Name, PeriodStartDate, PeriodEndDate }
   const token = req.headers['authorization'];
+  console.log(datos);
   try {
-    const resp = await getPaymentsByEmployee(personal, token);
+    const resp = await getPaymentsByEmployee(datos, token);
     res.json({ ok: true, data: resp.data })
   } catch (error) {
     return res.json(error)
@@ -52,10 +57,23 @@ const approvedTimeOff = async (req, res = response) => {
 
 const timeOffRequestEmployee = async (req, res = response) => {
   const PersonnelNumber = req.query.PersonnelNumber;
+  const StartDate = req.query.StartDate;
+  const EndDate = req.query.EndDate;
   const token = req.headers['authorization'];
   try {
-    const resp = await timeOffRequestByEmployee(PersonnelNumber, token)
-    res.json({ ok: true, data: resp.data })
+    if (!StartDate && !EndDate) {
+      const resp = await timeOffRequestByEmployee(PersonnelNumber, token)
+      res.json({ ok: true, data: resp.data })
+    } else {
+      const datos = {
+        PersonnelNumber,
+        StartDate,
+        EndDate,
+        token
+      }
+      const respuesta = await timeOffRequestByEmployeeByDate(datos)
+      res.json({ ok: true, data: respuesta.data })
+    }
   } catch (error) {
     return res.json(error)
   }
@@ -73,18 +91,27 @@ const getTypeLeave = async (req, res = response) => {
 }
 
 const requestTimeOff = async (req, res = response) => {
-  const LeaveDate = dayjs(new Date()).format("YYYY-MM-DD");
-  const datos = { ...req.body, LeaveDate };
+  // const LeaveDate = dayjs(new Date()).format("YYYY-MM-DD");
+  // {
+  //     "LeaveDate": "2024-01-09",
+  //     "PersonnelNumber": "000020",
+  //     "Comment": "Licencia medica por covid",
+  //     "Amount": 8,
+  //     "HalfDayDefinition": "None"
+  // }
   const token = req.headers['authorization'];
+
   try {
+    const datos = { ...req.body };
     const resp = await requestTimeOffByEmployee(datos, token)
     res.json(resp)
   } catch (error) {
+    console.log(error);
     return res.json(error)
   }
 }
 
-const getPayStatementEarningLine = async(req, res = response) => {
+const getPayStatementEarningLine = async (req, res = response) => {
   const PersonnelNumber = req.query.PersonnelNumber;
   const PayStatementNumber = req.query.PayStatementNumber;
   const token = req.headers['authorization'];
@@ -96,7 +123,7 @@ const getPayStatementEarningLine = async(req, res = response) => {
   }
 }
 
-const getAccumulationEarnings = async(req, res = response) => {
+const getAccumulationEarnings = async (req, res = response) => {
   const PayStatementNumber = req.query.PayStatementNumber;
   const token = req.headers['authorization'];
   try {
@@ -104,10 +131,10 @@ const getAccumulationEarnings = async(req, res = response) => {
     res.json({ ok: true, data: resp.data })
   } catch (error) {
     return res.json(error)
-  } 
+  }
 }
 
-const getDeductionsByBenefit = async(req, res = response) => {
+const getDeductionsByBenefit = async (req, res = response) => {
   const PayStatementNumber = req.query.PayStatementNumber;
   const token = req.headers['authorization'];
   try {
@@ -115,10 +142,10 @@ const getDeductionsByBenefit = async(req, res = response) => {
     res.json({ ok: true, data: resp })
   } catch (error) {
     return res.json(error)
-  } 
+  }
 }
 
-const getDeductionsImpuestos = async(req, res = response) => {
+const getDeductionsImpuestos = async (req, res = response) => {
   const PayStatementNumber = req.query.PayStatementNumber;
   const token = req.headers['authorization'];
   try {
@@ -126,7 +153,7 @@ const getDeductionsImpuestos = async(req, res = response) => {
     res.json({ ok: true, data: resp.data })
   } catch (error) {
     return res.json(error)
-  } 
+  }
 }
 
 

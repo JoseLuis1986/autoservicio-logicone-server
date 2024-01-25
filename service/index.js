@@ -11,7 +11,9 @@ const getToken = (values) => {
       tenant_id,
       client_id,
       client_secret,
-      grant_type
+      grant_type,
+      logo,
+      background
     } = values;
 
     let data = new FormData();
@@ -34,7 +36,7 @@ const getToken = (values) => {
     axios.request(config)
       .then((response) => response.data)
       .then((result) => {
-        resolve({ success: true, msg: 'token generado', token: result });
+        resolve({ success: true, msg: 'token generado', token: result, logo, background });
       })
       .catch((error) => {
         reject({ success: false, msg: error.response.data.error_description });
@@ -71,6 +73,7 @@ const sendMail = async (subject, toEmail, otpText, keyaccess) => {
     }
   });
 };
+
 
 module.exports = {
   getToken,
