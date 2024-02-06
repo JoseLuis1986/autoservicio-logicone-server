@@ -42,9 +42,7 @@ class Server {
         this.app.use('/api/employee', require('../router/employee'));
         this.app.use('/api/payments', require('../router/payments'));
         this.app.use('/api/general', require('../router/general'));
-        // this.app.use((req, res) => {
-        //     res.status(404).send({ success: false, message: "Not found" })
-        // })
+        this.app.use('/api/config-update', require('../router/config'))
 
     }
 

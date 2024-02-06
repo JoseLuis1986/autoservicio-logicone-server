@@ -31,13 +31,17 @@ const configurationSchema = Schema({
         type: String,
         required: true
     },
+    password: {
+        type: String,
+        required: true
+    },
     logo: {
         type: String,
-        default: "https://via.placeholder.com/150"  
+        required: false
     },
     background: {
         type: String,
-        default: "bac2da"  
+        required: false
     }
 });
 

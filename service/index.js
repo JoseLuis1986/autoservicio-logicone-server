@@ -12,8 +12,6 @@ const getToken = (values) => {
       client_id,
       client_secret,
       grant_type,
-      logo,
-      background
     } = values;
 
     let data = new FormData();
@@ -36,7 +34,7 @@ const getToken = (values) => {
     axios.request(config)
       .then((response) => response.data)
       .then((result) => {
-        resolve({ success: true, msg: 'token generado', token: result, logo, background });
+        resolve({ success: true, msg: 'token generado', token: result });
       })
       .catch((error) => {
         reject({ success: false, msg: error.response.data.error_description });

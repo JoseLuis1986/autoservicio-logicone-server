@@ -18,9 +18,10 @@ const sendRequestAccess = (name, personal_id, token) => {
         axios.request(config)
             .then((response) => response.data)
             .then(({ value }) => {
+                console.log(value);
                 const idFiltered = value.filter((item) => item.IdentificationNumber === personal_id);
                 if (!idFiltered.length) {
-                    return resolve({ success: true, data: idFiltered, message: 'Su Identificacion es incorrecta' })
+                    return resolve({ success: false, data: idFiltered, message: 'Su Identificacion es incorrecta' })
                 }
                 return resolve({ success: true, data: idFiltered, message: 'Su solicitud fue enviada a recursos humanos' });
             })

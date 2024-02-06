@@ -1,10 +1,11 @@
 const { response } = require('express');
-const getDataFormCase = require('../service/general.service');
+const { getDataFormCase, requestCaseByEmployee } = require('../service/general.service');
 const { default: axios } = require('axios');
 
 const generalController = async (req, res = response) => {
     const token = req.headers['authorization'];
     const { Personnelnumber } = req.query;
+    console.log(token);
     console.log(Personnelnumber);
     const urlBase = process.env.URL_GET_CLASS;
     const urlAddress = `${urlBase}/GetTestCustomClass`;
@@ -14,13 +15,13 @@ const generalController = async (req, res = response) => {
         const result = await axios.post(urlAddress, rawData, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer '+token
+                'Authorization': 'Bearer ' + token
             }
         });
         const { data } = result;
         const { Received, Status } = JSON.parse(data);
         const statusData = JSON.parse(JSON.stringify(Status))
-        const obj = { recibido: JSON.parse(Received), estado: JSON.parse(statusData) }
+        const obj = { categoria: JSON.parse(Received), estado: JSON.parse(statusData) }
         res.json({ success: true, data: obj });
     } catch (error) {
         console.log(error);
@@ -32,5 +33,22 @@ const generalController = async (req, res = response) => {
     }
 }
 
+const createGeneralCase = async (req, res = response) => {
+    const token = req.headers['authorization'];
 
-module.exports = generalController;
+    try {
+        const datos = { ...req.body };
+        const resp = await requestCaseByEmployee(datos, token)
+        console.log('respuesta del servicio', resp);
+        res.json({ success: resp.success, data: resp.data });
+    } catch (error) {
+        console.log(error);
+        return res.json(error)
+    }
+
+}
+
+module.exports = {
+    generalController,
+    createGeneralCase
+};

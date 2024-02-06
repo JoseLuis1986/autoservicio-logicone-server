@@ -5,6 +5,7 @@ const Configuration = require('../models/configuration');
 const { getToken, sendMail } = require('../service/index');
 const generateRandomNumbers = require('../helpers/generateRandomNumbers');
 const { sendRequestAccess } = require('../service/employee.service');
+const bcrypt = require('bcryptjs');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -14,15 +15,40 @@ const getConfigurations = async (req, res = response) => {
         //Si hay una configuracion establecida se retorna el token
         if (configurations[0]) {
             const result = await getToken(configurations[0])
-            const { token, logo, background } = result;
-            const imageLogo = fs.readFileSync(logo, { encoding: 'base64' });
-            const backgroundImage = fs.readFileSync(background, { encoding: 'base64' });
-            res.status(200).json({
-                success: true,
-                token,
-                imageLogo,
-                backgroundImage
-            })
+            console.log(result);
+            const { logo, background } = configurations[0];
+            const { token } = result;
+            if (logo === undefined && background === undefined) {
+                return res.status(200).json({
+                    success: true,
+                    token,
+                })
+            }
+            if (logo && background === undefined) {
+                const imageLogo = fs.readFileSync(logo, { encoding: 'base64' });
+                return res.status(200).json({
+                    success: true,
+                    token,
+                    imageLogo
+                })
+            } if (background && logo === undefined) {
+                const backgroundImage = fs.readFileSync(background, { encoding: 'base64' });
+                return res.status(200).json({
+                    success: true,
+                    token,
+                    backgroundImage
+                })
+            } else {
+                const imageLogo = fs.readFileSync(logo, { encoding: 'base64' });
+                const backgroundImage = fs.readFileSync(background, { encoding: 'base64' });
+                return res.status(200).json({
+                    success: true,
+                    token,
+                    imageLogo,
+                    backgroundImage
+                })
+            }
+
         } else {
             // De lo contrario se retorna un mensaje
             res.status(200).json({
@@ -31,24 +57,77 @@ const getConfigurations = async (req, res = response) => {
             })
         }
     } catch (err) {
-        console.log(err)
+        console.log('aqui es el error', err)
     }
 }
 
 const createConf = async (req, res = response) => {
-    const logo = req.files.logo[0];
-    const background = req.files.background[0];
+    const logo = req.files.logo ? req.files.logo[0] : null;
+    const background = req.files.background ? req.files.background[0] : null;
     try {
-        9
         const respuesta = await getToken(req.body);
+
         if (respuesta.success) {
-            const conf = new Configuration({
-                ...req.body,
-                logo: './uploads/logo/' + logo.filename,
-                background: './uploads/background/' + background.filename
-            });
-            await conf.save();
-            res.status(201).json(respuesta)
+            //si hay background y logo
+            const { password } = req.body;
+            const passwordHashed = bcrypt.hashSync(password, 10);
+
+            if (logo != null && background != null) {
+
+                const conf = new Configuration({
+                    ...req.body,
+                    password: passwordHashed,
+                    logo: './uploads/logo/' + logo.filename,
+                    background: './uploads/background/' + background.filename
+                });
+
+                const resultado = await conf.save();
+                const imageLogo = fs.readFileSync(resultado.logo, { encoding: 'base64' });
+                const backgroundImage = fs.readFileSync(resultado.background, { encoding: 'base64' });
+
+                return res.status(201).json({ ...respuesta, imageLogo, backgroundImage })
+
+                // si hay logo pero no hay background
+            } if (logo != null && background === null) {
+
+                delete req.body['background'];
+                const conf = new Configuration({
+                    ...req.body,
+                    password: passwordHashed,
+                    logo: './uploads/logo/' + logo.filename
+                });
+
+                const resultado = await conf.save();
+                console.log(resultado.logo);
+                const imageLogo = fs.readFileSync(resultado.logo, { encoding: 'base64' });
+                return res.status(201).json({ ...respuesta, imageLogo });
+
+                //si hay background pero no hay logo 
+            } if (background != null && logo === null) {
+
+                delete req.body['logo'];
+                const conf = new Configuration({
+                    ...req.body,
+                    password: passwordHashed,
+                    background: './uploads/background/' + background.filename
+                });
+                const resultado = await conf.save();
+                const backgroundImage = fs.readFileSync(resultado.background, { encoding: 'base64' });
+
+                return res.status(201).json({ ...respuesta, backgroundImage })
+
+                //no hay background ni hay logo
+            } else {
+
+                delete req.body['logo'];
+                delete req.body['background'];
+                const conf = new Configuration({
+                    ...req.body,
+                    password: passwordHashed,
+                });
+                const result = await conf.save();
+                return res.status(201).json(respuesta)
+            }
         }
 
     } catch (error) {
@@ -109,7 +188,7 @@ const requestAccess = async (req, res = response) => {
     try {
         const resp = await sendRequestAccess(Nombre, IdentificationNumber, token);
         console.log(resp);
-        res.json({ success: true, data: resp.data, message: resp.message });
+        res.json({ success: resp.success, data: resp.data, message: resp.message });
     } catch (err) {
         return res.status(404).json({
             success: false,
