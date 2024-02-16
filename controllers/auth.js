@@ -6,19 +6,21 @@ const { getToken, sendMail } = require('../service/index');
 const generateRandomNumbers = require('../helpers/generateRandomNumbers');
 const { sendRequestAccess } = require('../service/employee.service');
 const bcrypt = require('bcryptjs');
+const UserAdmin = require('../models/useradmin');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const getConfigurations = async (req, res = response) => {
     try {
         const configurations = await Configuration.find();
+
         //Si hay una configuracion establecida se retorna el token
         if (configurations[0]) {
-            const result = await getToken(configurations[0])
-            console.log(result);
+            const result = await getToken(configurations[0]);
             const { logo, background } = configurations[0];
+            console.log('mi logo aqui', logo)
             const { token } = result;
-            if (logo === undefined && background === undefined) {
+            if (logo === null && background === null) {
                 return res.status(200).json({
                     success: true,
                     token,
@@ -62,21 +64,20 @@ const getConfigurations = async (req, res = response) => {
 }
 
 const createConf = async (req, res = response) => {
-    const logo = req.files.logo ? req.files.logo[0] : null;
-    const background = req.files.background ? req.files.background[0] : null;
+    const logo = req.files.logo && req.files.logo[0];
+    const background = req.files.background && req.files.background[0];
     try {
         const respuesta = await getToken(req.body);
 
         if (respuesta.success) {
             //si hay background y logo
-            const { password } = req.body;
-            const passwordHashed = bcrypt.hashSync(password, 10);
+            // const { password } = req.body;
+            // const passwordHashed = bcrypt.hashSync(password, 10);
 
             if (logo != null && background != null) {
 
                 const conf = new Configuration({
                     ...req.body,
-                    password: passwordHashed,
                     logo: './uploads/logo/' + logo.filename,
                     background: './uploads/background/' + background.filename
                 });
@@ -93,7 +94,7 @@ const createConf = async (req, res = response) => {
                 delete req.body['background'];
                 const conf = new Configuration({
                     ...req.body,
-                    password: passwordHashed,
+                    // password: passwordHashed,
                     logo: './uploads/logo/' + logo.filename
                 });
 
@@ -108,7 +109,7 @@ const createConf = async (req, res = response) => {
                 delete req.body['logo'];
                 const conf = new Configuration({
                     ...req.body,
-                    password: passwordHashed,
+                    // password: passwordHashed,
                     background: './uploads/background/' + background.filename
                 });
                 const resultado = await conf.save();
@@ -123,7 +124,7 @@ const createConf = async (req, res = response) => {
                 delete req.body['background'];
                 const conf = new Configuration({
                     ...req.body,
-                    password: passwordHashed,
+                    // password: passwordHashed,
                 });
                 const result = await conf.save();
                 return res.status(201).json(respuesta)
@@ -131,21 +132,45 @@ const createConf = async (req, res = response) => {
         }
 
     } catch (error) {
-        res.status(400).json(error)
+        res.status(400).json(error);
     }
 };
 
-const loginUser = async (req, res = response) => {
+const createUserAdmin = async (req, res) => {
+    try {
+        const { password } = req.body;
+        const passwordHashed = bcrypt.hashSync(password, 10);
+        const adm = new UserAdmin({
+            ...req.body,
+            password: passwordHashed,
+        });
+        const result = await adm.save();
+        return res.status(201).json({ success: true, result })
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+}
 
+const getUserAdmin = async (req, res) => {
+    try {
+        const result = await UserAdmin.find();
+        return res.status(200).json({ success: true, data: result })
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+}
+
+const loginUser = async (req, res = response) => {
+    console.log(req.body);
     const token = req.headers['authorization'];
 
-    const { Personnelnumber, Identification, Nombre } = req.body;
+    const { Personnelnumber } = req.body;
 
     const urlBase = process.env.URL_GET_CLASS;
 
     const url = `${urlBase}/GetLHEmployeeInformation`
 
-    let rawData = JSON.stringify({ _json: `{\"Personnelnumber\":\"${Personnelnumber}\",\"Identification\":\"${Identification}\",\"Nombre\":\"${Nombre}\"}` })
+    let rawData = JSON.stringify({ _json: `{\"Personnelnumber\":\"${Personnelnumber}\"}` })
 
     try {
         const resp = await axios.post(url, rawData, {
@@ -206,6 +231,8 @@ const renewToken = async (req, res = response) => {
 module.exports = {
     getConfigurations,
     createConf,
+    createUserAdmin,
+    getUserAdmin,
     loginUser,
     requestAccess,
     renewToken

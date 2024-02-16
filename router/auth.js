@@ -3,7 +3,7 @@
 */
 const { Router } = require('express');
 const { check } = require('express-validator');
-const { createConf, loginUser, renewToken, getConfigurations, requestAccess } = require('../controllers/auth');
+const { createConf, loginUser, renewToken, getConfigurations, requestAccess, createUserAdmin, getUserAdmin } = require('../controllers/auth');
 const { validateFields } = require('../middlewares/validate-fields');
 const { uploadImage } = require('../middlewares/storage');
 // const { validateJWT } = require('../middlewares/validate-jwt');
@@ -23,6 +23,17 @@ router.post('/new', uploadImage.fields([{
   name: 'background', maxCount: 1
 }]), createConf);
 
+//Crear usuario admin
+router.post('/new-useradmin', [
+  check('codigo', 'El Codigo de empleado es requerido').notEmpty(),
+  check('name', 'El Nombre es requerido').notEmpty(),
+  check('email', 'Tu email no es valido').not().isEmpty().isEmail().normalizeEmail(),
+  check('password', 'Debes ingresar una contraseña').notEmpty(),
+  validateFields
+], createUserAdmin);
+
+//Obtener usuario admin
+router.get('/user-admin', getUserAdmin);
 
 // Login empleados
 router.post('/', [

@@ -10,6 +10,7 @@ const saveImage = multer.diskStorage({
         }
     },
     filename: (req, file, cb) => {
+        console.log(file);
         if(file !== null) {
             const ext = file.originalname.split('.').pop();
             cb(null, Date.now() + '.'+ext);  // Use original name

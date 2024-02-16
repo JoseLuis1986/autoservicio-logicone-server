@@ -1,5 +1,42 @@
 const axios = require('axios');
 
+const getEmployeeByCodePersonal = (code, token) => {
+    console.log('aqui en el servicio', code);
+    const urlBase = process.env.URL_GET_CLASS;
+    const url = `${urlBase}/GetLHEmployeeInformation`
+    let rawData = JSON.stringify({ _json: `{\"Personnelnumber\":\"${code}\"}` });
+
+    return new Promise((resolve, reject) => {
+
+        let config = {
+            method: 'post',
+            url: url,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            data: rawData
+        };
+        axios.request(config)
+            .then((response) => {
+                const { data } = response;
+                const dataUser = JSON.parse(data);
+                const { Received } = dataUser;
+                const { PersonnelNumber, PartyNumber, Name, NameAlias, PrimaryContactEmail } = JSON.parse(Received);
+                const resultEmp = { PersonnelNumber, PartyNumber, Name, NameAlias, PrimaryContactEmail };
+                resolve({ success: true, data: resultEmp });
+            })
+            .catch((error) => {
+                reject({
+                    success: false,
+                    data: error
+                })
+            })
+
+
+    });
+};
+
 const sendRequestAccess = (name, personal_id, token) => {
     console.log(name);
     return new Promise((resolve, reject) => {
@@ -207,6 +244,7 @@ const getPaymentsMethodsByEmp = (num, token) => {
 
 
 module.exports = {
+    getEmployeeByCodePersonal,
     sendRequestAccess,
     getAddressByEmployee,
     getContactDetailsByEmployee,

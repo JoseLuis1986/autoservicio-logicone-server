@@ -31,20 +31,14 @@ const configurationSchema = Schema({
         type: String,
         required: true
     },
-    admin: {
-        type: String,
-        required: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
     logo: {
         type: String,
+        default: null,
         required: false
     },
     background: {
         type: String,
+        default: null,
         required: false
     }
 });

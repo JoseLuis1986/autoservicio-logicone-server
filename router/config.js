@@ -4,6 +4,7 @@
 const { Router } = require('express');
 const { getConfirmationPassword, getConfigurationEntitie, updateConfigurations } = require('../controllers/configupdate.controller');
 const { uploadImage } = require('../middlewares/storage');
+const { getUserAdmin } = require('../controllers/auth');
 
 
 const router = Router();
@@ -17,5 +18,6 @@ router.put('/', uploadImage.fields([{
 }, {
     name: 'background', maxCount: 1
 }]), updateConfigurations);
+
 
 module.exports = router;

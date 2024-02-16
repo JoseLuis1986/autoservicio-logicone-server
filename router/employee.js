@@ -9,10 +9,18 @@ const {
     getContactDetailsEmployee,
     getPersonalContactsEmployee,
     getPersonalIds,
-    getPaymentsMethods
+    getPaymentsMethods,
+    getEmployeeByCode
 } = require('../controllers/employee.controller');
 
 const router = Router();
+
+//Obtener el empleado por codigo
+router.get('/', [
+    check('PersonnelNumber', 'PersonnelNumber is required').notEmpty(),
+    validateFields
+], getEmployeeByCode);
+
 
 //Obtener las direcciones del empleado
 router.get('/addresses', [

@@ -35,26 +35,29 @@ const getConfigurationEntitie = async (req, res = response) => {
 
 
 const updateConfigurations = async (req, res = response) => {
-    
     try {
         const hasLogo = req.files.logo && req.files.logo[0];
-        const hasBg =  req.files.background && req.files.background[0];
+        const hasBg = req.files.background && req.files.background[0];
         const logoPpal = hasLogo ? './uploads/logo/' + hasLogo.filename : req.body.logo;
         const bg = hasBg ? './uploads/background/' + hasBg.filename : req.body.background;
-        const { _id, password } = req.body;
-        console.log(_id);
-        const { password: pass } = await Configuration.findById(_id);
-        const newPass = await bcrypt.compare(password, pass);
-        if (!newPass) {
-            const passwordHashed = bcrypt.hashSync(password, 10);
-            const newData = { ...req.body, password: passwordHashed, logo: logoPpal, background: bg };
-            const result = await Configuration.findByIdAndUpdate(_id, newData)
-            res.status(200).json({ success: true, data: result, msg: 'Sus datos han sido actualizados exitosamente'})
-        } else {
-            const newData = { ...req.body, logo: logoPpal, background: bg };
-            const result = await Configuration.findByIdAndUpdate(_id, newData)
-            res.status(200).json({ success: true, data: result, msg: 'Sus datos han sido actualizados exitosamente' })
-        }
+        const { _id } = req.body;
+        const datos = await Configuration.findById(_id);
+        console.log('cuerpo de mi actualizacion', datos);
+        const newData = { ...req.body, logo: logoPpal, background: bg };
+        const result = await Configuration.findByIdAndUpdate(_id, newData)
+        res.status(200).json({ success: true, data: result, msg: 'Sus datos han sido actualizados exitosamente' })
+        // const { password: pass } = await Configuration.findById(_id);
+        // const newPass = await bcrypt.compare(password, pass);
+        // if (!newPass) {
+        //     const passwordHashed = bcrypt.hashSync(password, 10);
+        //     const newData = { ...req.body, password: passwordHashed, logo: logoPpal, background: bg };
+        //     const result = await Configuration.findByIdAndUpdate(_id, newData)
+        //     res.status(200).json({ success: true, data: result, msg: 'Sus datos han sido actualizados exitosamente'})
+        // } else {
+        //     const newData = { ...req.body, logo: logoPpal, background: bg };
+        //     const result = await Configuration.findByIdAndUpdate(_id, newData)
+        //     res.status(200).json({ success: true, data: result, msg: 'Sus datos han sido actualizados exitosamente' })
+        // }
 
     } catch (error) {
         return res.status(400).json({ success: false, msg: error })

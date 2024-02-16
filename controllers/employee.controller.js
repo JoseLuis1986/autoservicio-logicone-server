@@ -4,8 +4,21 @@ const {
     getContactDetailsByEmployee,
     getPersonalContactsByEmployee,
     getPersonalIdsByEmployee,
-    getPaymentsMethodsByEmp
+    getPaymentsMethodsByEmp,
+    getEmployeeByCodePersonal
 } = require('../service/employee.service');
+
+
+const getEmployeeByCode = async (req, res = response) => {
+    const Personnelnumber = req.query.PersonnelNumber;
+    const token = req.headers['authorization'];
+    try {
+        const resp = await getEmployeeByCodePersonal(Personnelnumber, token);
+        res.json({ success: true, data: resp.data });
+    } catch (error) {
+        return res.json(error)
+    }
+}
 
 
 const getAdressEmployee = async (req, res = response) => {
@@ -64,6 +77,7 @@ const getPaymentsMethods = async (req, res = response) => {
 };
 
 module.exports = {
+    getEmployeeByCode,
     getAdressEmployee,
     getContactDetailsEmployee,
     getPersonalContactsEmployee,
