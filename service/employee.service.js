@@ -1,13 +1,10 @@
 const axios = require('axios');
 
 const getEmployeeByCodePersonal = (code, token) => {
-    console.log('aqui en el servicio', code);
     const urlBase = process.env.URL_GET_CLASS;
     const url = `${urlBase}/GetLHEmployeeInformation`
     let rawData = JSON.stringify({ _json: `{\"Personnelnumber\":\"${code}\"}` });
-
     return new Promise((resolve, reject) => {
-
         let config = {
             method: 'post',
             url: url,
@@ -24,10 +21,10 @@ const getEmployeeByCodePersonal = (code, token) => {
                 const { Received } = dataUser;
                 const { PersonnelNumber, PartyNumber, Name, NameAlias, PrimaryContactEmail } = JSON.parse(Received);
                 const resultEmp = { PersonnelNumber, PartyNumber, Name, NameAlias, PrimaryContactEmail };
-                resolve({ success: true, data: resultEmp });
+                return resolve({ success: true, data: resultEmp });
             })
             .catch((error) => {
-                reject({
+                return reject({
                     success: false,
                     data: error
                 })
@@ -38,7 +35,6 @@ const getEmployeeByCodePersonal = (code, token) => {
 };
 
 const sendRequestAccess = (name, personal_id, token) => {
-    console.log(name);
     return new Promise((resolve, reject) => {
         const urlBase = process.env.URL_BASE;
         const url = `${urlBase}/PersonIdentificationNumbers`;
@@ -55,7 +51,6 @@ const sendRequestAccess = (name, personal_id, token) => {
         axios.request(config)
             .then((response) => response.data)
             .then(({ value }) => {
-                console.log(value);
                 const idFiltered = value.filter((item) => item.IdentificationNumber === personal_id);
                 if (!idFiltered.length) {
                     return resolve({ success: false, data: idFiltered, message: 'Su Identificacion es incorrecta' })

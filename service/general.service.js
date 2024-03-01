@@ -20,19 +20,6 @@ const getDataFormCase = (token) => {
                 status: error.response.status,
                 statusText: error.response.statusText
             }))
-        // axios.request(config)
-        //     .then((response) => console.log(response))
-        //     // .then((result) => {
-        //     //     resolve({ success: true, data: result });
-        //     // })
-        //     .catch((error) => {
-        //         reject({
-        //             success: false,
-        //             status: error.response.status,
-        //             statusText: error.response.statusText
-        //         })
-        //     })
-
     });
 };
 
@@ -53,7 +40,6 @@ const requestCaseByEmployee = async (data, token) => {
     let dataBody = JSON.stringify({
         "_json": `{\"Description\":\"${Description}\",\"CaseCategory\":\"${CaseCategory}\",\"Priority\":${Priority},\"Category\":\"${Category}\",\"PartyNumber\":\"${PartyNumber}\"}`
     });
-    console.log(dataBody);
 
     return new Promise((resolve, reject) => {
         
@@ -75,7 +61,6 @@ const requestCaseByEmployee = async (data, token) => {
                 const dataReceived = JSON.parse(data);
                 const { Received, CodigoError, DescripcionError } = dataReceived
                 const respuesta = JSON.parse(Received);
-                console.log('rsultados de mi consulta', respuesta);
                 resolve({ success: true, data: respuesta })
             })
             .catch((error) => {

@@ -18,7 +18,6 @@ const getConfigurations = async (req, res = response) => {
         if (configurations[0]) {
             const result = await getToken(configurations[0]);
             const { logo, background } = configurations[0];
-            console.log('mi logo aqui', logo)
             const { token } = result;
             if (logo === null && background === null) {
                 return res.status(200).json({
@@ -26,14 +25,14 @@ const getConfigurations = async (req, res = response) => {
                     token,
                 })
             }
-            if (logo && background === undefined) {
+            if (logo && background === null) {
                 const imageLogo = fs.readFileSync(logo, { encoding: 'base64' });
                 return res.status(200).json({
                     success: true,
                     token,
                     imageLogo
                 })
-            } if (background && logo === undefined) {
+            } if (background && logo === null) {
                 const backgroundImage = fs.readFileSync(background, { encoding: 'base64' });
                 return res.status(200).json({
                     success: true,
@@ -59,13 +58,14 @@ const getConfigurations = async (req, res = response) => {
             })
         }
     } catch (err) {
-        console.log('aqui es el error', err)
+        console.log(err)
     }
 }
 
 const createConf = async (req, res = response) => {
     const logo = req.files.logo && req.files.logo[0];
     const background = req.files.background && req.files.background[0];
+
     try {
         const respuesta = await getToken(req.body);
 
@@ -74,8 +74,7 @@ const createConf = async (req, res = response) => {
             // const { password } = req.body;
             // const passwordHashed = bcrypt.hashSync(password, 10);
 
-            if (logo != null && background != null) {
-
+            if (logo != undefined && background != undefined) {
                 const conf = new Configuration({
                     ...req.body,
                     logo: './uploads/logo/' + logo.filename,
@@ -89,8 +88,7 @@ const createConf = async (req, res = response) => {
                 return res.status(201).json({ ...respuesta, imageLogo, backgroundImage })
 
                 // si hay logo pero no hay background
-            } if (logo != null && background === null) {
-
+            } if (logo != undefined && background === undefined) {
                 delete req.body['background'];
                 const conf = new Configuration({
                     ...req.body,
@@ -99,13 +97,11 @@ const createConf = async (req, res = response) => {
                 });
 
                 const resultado = await conf.save();
-                console.log(resultado.logo);
                 const imageLogo = fs.readFileSync(resultado.logo, { encoding: 'base64' });
                 return res.status(201).json({ ...respuesta, imageLogo });
 
                 //si hay background pero no hay logo 
-            } if (background != null && logo === null) {
-
+            } if (background != undefined && logo === undefined) {
                 delete req.body['logo'];
                 const conf = new Configuration({
                     ...req.body,
@@ -115,11 +111,10 @@ const createConf = async (req, res = response) => {
                 const resultado = await conf.save();
                 const backgroundImage = fs.readFileSync(resultado.background, { encoding: 'base64' });
 
-                return res.status(201).json({ ...respuesta, backgroundImage })
+                return res.status(201).json({ ...respuesta, backgroundImage });
 
                 //no hay background ni hay logo
             } else {
-
                 delete req.body['logo'];
                 delete req.body['background'];
                 const conf = new Configuration({
@@ -137,6 +132,7 @@ const createConf = async (req, res = response) => {
 };
 
 const createUserAdmin = async (req, res) => {
+    // E11000 duplicate key error collection: autoservicio_logicone.useradmins index: email_1 dup key: { email: "brooked@contoso.com" }
     try {
         const { password } = req.body;
         const passwordHashed = bcrypt.hashSync(password, 10);
@@ -146,6 +142,18 @@ const createUserAdmin = async (req, res) => {
         });
         const result = await adm.save();
         return res.status(201).json({ success: true, result })
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ success: false, error: 'Este usuario ya se encuentra registrado como administrador' });
+        }
+       return res.status(400).json({ success: false, error: error.message});
+    }
+};
+
+const deleteUserAdmin = async (req, res) => {
+    try {
+        const result = await UserAdmin.findByIdAndDelete(req.params._id);
+        return res.status(200).json({ success: true, result })
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });
     }
@@ -158,10 +166,9 @@ const getUserAdmin = async (req, res) => {
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });
     }
-}
+};
 
 const loginUser = async (req, res = response) => {
-    console.log(req.body);
     const token = req.headers['authorization'];
 
     const { Personnelnumber } = req.body;
@@ -206,13 +213,11 @@ const loginUser = async (req, res = response) => {
 };
 
 const requestAccess = async (req, res = response) => {
-    console.log(req.body);
     const token = req.headers['authorization'];
     const { Nombre, IdentificationNumber } = req.body;
 
     try {
         const resp = await sendRequestAccess(Nombre, IdentificationNumber, token);
-        console.log(resp);
         res.json({ success: resp.success, data: resp.data, message: resp.message });
     } catch (err) {
         return res.status(404).json({
@@ -220,7 +225,7 @@ const requestAccess = async (req, res = response) => {
             error: err
         })
     }
-}
+};
 
 const renewToken = async (req, res = response) => {
     const name = req.query;
@@ -232,6 +237,7 @@ module.exports = {
     getConfigurations,
     createConf,
     createUserAdmin,
+    deleteUserAdmin,
     getUserAdmin,
     loginUser,
     requestAccess,

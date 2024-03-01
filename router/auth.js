@@ -3,7 +3,7 @@
 */
 const { Router } = require('express');
 const { check } = require('express-validator');
-const { createConf, loginUser, renewToken, getConfigurations, requestAccess, createUserAdmin, getUserAdmin } = require('../controllers/auth');
+const { createConf, loginUser, renewToken, getConfigurations, requestAccess, createUserAdmin, getUserAdmin, deleteUserAdmin } = require('../controllers/auth');
 const { validateFields } = require('../middlewares/validate-fields');
 const { uploadImage } = require('../middlewares/storage');
 // const { validateJWT } = require('../middlewares/validate-jwt');
@@ -14,9 +14,6 @@ const router = Router();
 router.get('/', getConfigurations)
 
 //Crear nuevas configuraciones
-/**TO-DO probar que no se cree otra configuracion igual a la que ya existe */
-
-// router.post('/new', uploadImage.single('logo'), createConf);
 router.post('/new', uploadImage.fields([{
   name: 'logo', maxCount: 1
 }, {
@@ -34,6 +31,9 @@ router.post('/new-useradmin', [
 
 //Obtener usuario admin
 router.get('/user-admin', getUserAdmin);
+
+//Eliminar usuario admin4
+router.delete('/user-admin/:_id', deleteUserAdmin);
 
 // Login empleados
 router.post('/', [

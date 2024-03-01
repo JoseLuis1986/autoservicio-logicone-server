@@ -17,14 +17,12 @@ const dayjs = require('dayjs');
 
 
 const getAllPayments = async (req, res = response) => {
-  console.log(req.query);
   const Personnelnumber = req.query.PersonnelNumber;
   const Name = req.query.Name;
   const PeriodStartDate = req.query.PeriodStartDate;
   const PeriodEndDate = req.query.PeriodEndDate;
   const datos = { Personnelnumber, Name, PeriodStartDate, PeriodEndDate }
   const token = req.headers['authorization'];
-  console.log(datos);
   try {
     const resp = await getPaymentsByEmployee(datos, token);
     res.json({ ok: true, data: resp.data })
@@ -106,7 +104,6 @@ const requestTimeOff = async (req, res = response) => {
     const resp = await requestTimeOffByEmployee(datos, token)
     res.json(resp)
   } catch (error) {
-    console.log(error);
     return res.json(error)
   }
 }

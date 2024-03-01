@@ -5,8 +5,7 @@ const { default: axios } = require('axios');
 const generalController = async (req, res = response) => {
     const token = req.headers['authorization'];
     const { Personnelnumber } = req.query;
-    console.log(token);
-    console.log(Personnelnumber);
+
     const urlBase = process.env.URL_GET_CLASS;
     const urlAddress = `${urlBase}/GetTestCustomClass`;
     let rawData = JSON.stringify({ _json: `{\"Personnelnumber\":\"${Personnelnumber}\"}` })
@@ -24,7 +23,6 @@ const generalController = async (req, res = response) => {
         const obj = { categoria: JSON.parse(Received), estado: JSON.parse(statusData) }
         res.json({ success: true, data: obj });
     } catch (error) {
-        console.log(error);
         return res.json({
             success: false,
             status: error.response.status,
@@ -39,7 +37,6 @@ const createGeneralCase = async (req, res = response) => {
     try {
         const datos = { ...req.body };
         const resp = await requestCaseByEmployee(datos, token)
-        console.log('respuesta del servicio', resp);
         res.json({ success: resp.success, data: resp.data });
     } catch (error) {
         console.log(error);

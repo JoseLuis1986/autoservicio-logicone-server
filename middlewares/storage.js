@@ -3,17 +3,16 @@ const multer = require('multer');
 const saveImage = multer.diskStorage({
     destination: (req, file, cb) => {
         // The destination is determined by the `destination` option
-        if(file.fieldname === "logo"){
+        if (file.fieldname === "logo") {
             cb(null, './uploads/logo')
         } else {
             cb(null, './uploads/background')
         }
     },
     filename: (req, file, cb) => {
-        console.log(file);
-        if(file !== null) {
+        if (file !== null) {
             const ext = file.originalname.split('.').pop();
-            cb(null, Date.now() + '.'+ext);  // Use original name
+            cb(null, Date.now() + '.' + ext);  // Use original name
         }
     }
 });

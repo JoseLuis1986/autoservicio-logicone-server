@@ -39,7 +39,6 @@ const getPaymentsByEmployee = ({ Personnelnumber, Name, PeriodStartDate, PeriodE
                 resolve({ success: true, data: newPay });
             })
             .catch((error) => {
-                console.log(error)
                 reject({
                     success: false,
                     status: error.response.status,
@@ -169,7 +168,6 @@ const timeOffRequestByEmployeeByDate = ({
     StartDate,
     EndDate,
     token }) => {
-        console.log(PersonnelNumber);
     return new Promise((resolve, reject) => {
         const urlBase = process.env.URL_BASE
         const url1 = `${urlBase}/EssLeaveRequestAssignedHeaders?$filter=PersonnelNumber eq \'${PersonnelNumber}\' and StartDate ge ${StartDate} and EndDate le ${EndDate}`
@@ -297,7 +295,6 @@ const requestTimeOffByEmployee = (data, token) => {
 
         startDateLeaveAbsence(datos)
             .then((data) => {
-                console.log(data);
                 const { RequestId, LeaveType } = data;
                 const datesArray = getDatesBetween(startDate, endDate);
                 delete datesArray[0];
