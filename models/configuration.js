@@ -31,6 +31,14 @@ const configurationSchema = Schema({
         type: String,
         required: true
     },
+    email: {
+        type: String,
+        required: true
+    },
+    email_pass: {
+        type: String,
+        required: true
+    },
     logo: {
         type: String,
         default: null,

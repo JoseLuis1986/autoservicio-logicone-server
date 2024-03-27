@@ -7,6 +7,7 @@ const generateRandomNumbers = require('../helpers/generateRandomNumbers');
 const { sendRequestAccess } = require('../service/employee.service');
 const bcrypt = require('bcryptjs');
 const UserAdmin = require('../models/useradmin');
+const { validationResult } = require('express-validator');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -63,20 +64,28 @@ const getConfigurations = async (req, res = response) => {
 }
 
 const createConf = async (req, res = response) => {
-    const logo = req.files.logo && req.files.logo[0];
-    const background = req.files.background && req.files.background[0];
+    const errors = validationResult(req);
 
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            error: errors.array()
+        });
+    }
     try {
+        const logo = req.files.logo && req.files.logo[0];
+        const background = req.files.background && req.files.background[0];
         const respuesta = await getToken(req.body);
 
         if (respuesta.success) {
             //si hay background y logo
-            // const { password } = req.body;
-            // const passwordHashed = bcrypt.hashSync(password, 10);
+            // const { email_pass } = req.body;
+            // const passwordHashed = bcrypt.hashSync(email_pass, 10);
 
             if (logo != undefined && background != undefined) {
                 const conf = new Configuration({
                     ...req.body,
+                    // email_pass: passwordHashed,
                     logo: './uploads/logo/' + logo.filename,
                     background: './uploads/background/' + background.filename
                 });
@@ -92,7 +101,7 @@ const createConf = async (req, res = response) => {
                 delete req.body['background'];
                 const conf = new Configuration({
                     ...req.body,
-                    // password: passwordHashed,
+                    // email_pass: passwordHashed,
                     logo: './uploads/logo/' + logo.filename
                 });
 
@@ -105,7 +114,7 @@ const createConf = async (req, res = response) => {
                 delete req.body['logo'];
                 const conf = new Configuration({
                     ...req.body,
-                    // password: passwordHashed,
+                    // email_pass: passwordHashed,
                     background: './uploads/background/' + background.filename
                 });
                 const resultado = await conf.save();
@@ -119,7 +128,7 @@ const createConf = async (req, res = response) => {
                 delete req.body['background'];
                 const conf = new Configuration({
                     ...req.body,
-                    // password: passwordHashed,
+                    // email_pass: passwordHashed,
                 });
                 const result = await conf.save();
                 return res.status(201).json(respuesta)
@@ -146,7 +155,7 @@ const createUserAdmin = async (req, res) => {
         if (error.code === 11000) {
             return res.status(400).json({ success: false, error: 'Este usuario ya se encuentra registrado como administrador' });
         }
-       return res.status(400).json({ success: false, error: error.message});
+        return res.status(400).json({ success: false, error: error.message });
     }
 };
 
@@ -193,7 +202,8 @@ const loginUser = async (req, res = response) => {
         const fourDigits = generateRandomNumbers();
         const subject = `Bienvenido al autoservicio de logicone Sr. ${datosUser.Name}, ${datosUser.PrimaryContactEmail}`
 
-        await sendMail(`${subject}`, "joseluissanchezgarcia1986@gmail.com", "Su clave de acceso", fourDigits)
+        const resSend = await sendMail(`${subject}`, "jasencio@logicone.com.do", "Su clave de acceso", fourDigits)
+        console.log('devolucion', resSend);
         const dtt = {
             datosUser,
             CodigoError,

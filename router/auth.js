@@ -18,7 +18,10 @@ router.post('/new', uploadImage.fields([{
   name: 'logo', maxCount: 1
 }, {
   name: 'background', maxCount: 1
-}]), createConf);
+}]), [
+  check('email', 'El email es requerido').isEmail().normalizeEmail(),
+  check('email_pass', 'El email password es requerido').notEmpty()
+], createConf);
 
 //Crear usuario admin
 router.post('/new-useradmin', [

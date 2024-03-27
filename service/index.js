@@ -1,6 +1,8 @@
 const axios = require('axios');
 const nodemailer = require("nodemailer");
 const FormData = require('form-data');
+const { getConfigurationEntitie } = require('../controllers/configupdate.controller');
+const Configuration  = require('../models/configuration');
 
 
 const getToken = (values) => {
@@ -44,16 +46,32 @@ const getToken = (values) => {
 };
 
 const sendMail = async (subject, toEmail, otpText, keyaccess) => {
-  var transporter = nodemailer.createTransport({
-    service: "gmail",
+
+  //Obtengo el email y passw corporativo desde mi db mongodb
+  const { email, email_pass } = await Configuration.findOne();
+
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.office365.com',
+    port: 587,
+    secure: false,
     auth: {
-      user: process.env.NODE_MAILER_EMAIL,
-      pass: process.env.NODE_MAILER_PSSW,
+      user: email,
+      pass: email_pass
     },
-  });
+    // tls: {
+    //   rejectUnauthorized: false
+    // }
+  })
+  // var transporter = nodemailer.createTransport({
+  //   service: "gmail",
+  //   auth: {
+  //     user: process.env.NODE_MAILER_EMAIL,
+  //     pass: process.env.NODE_MAILER_PSSW,
+  //   },
+  // });
 
   var mailOptions = {
-    from: process.env.NODE_MAILER_EMAIL,
+    from: email,
     to: toEmail,
     subject: subject,
     text: otpText,
