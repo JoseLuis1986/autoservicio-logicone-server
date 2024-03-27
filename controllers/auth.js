@@ -202,7 +202,7 @@ const loginUser = async (req, res = response) => {
         const fourDigits = generateRandomNumbers();
         const subject = `Bienvenido al autoservicio de logicone Sr. ${datosUser.Name}, ${datosUser.PrimaryContactEmail}`
 
-        const resSend = await sendMail(`${subject}`, "jasencio@logicone.com.do", "Su clave de acceso", fourDigits)
+        const resSend = await sendMail(`${subject}`, `${datosUser.PrimaryContactEmail}`, "Su clave de acceso", fourDigits)
         console.log('devolucion', resSend);
         const dtt = {
             datosUser,
